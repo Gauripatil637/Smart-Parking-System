@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Smart Parking Management System</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    margin: 0;
+    background: linear-gradient(120deg, #ffe1a6, #f5f5f5);
+    color: #333;
+}
+
+header {
+    background: linear-gradient(90deg, #172b3b, #0758d5);
+    color: white;
+    text-align: center;
+    padding: 25px;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 28px;
+}
+
+header p {
+    margin-bottom: 0;
+}
+
+.container {
+    width: 85%;
+    margin: 25px auto;
+}
+
+.dashboard {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.card {
+    background: white;
+    flex: 1;
+    padding: 22px;
+    text-align: center;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px #ccc;
+}
+
+.card h3 {
+    margin: 0;
+}
+
+.card h2 {
+    color: #0758d5;
+    margin-bottom: 0;
+}
+
+.section {
+    background: white;
+    padding: 22px;
+    margin-bottom: 18px;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px #ccc;
+}
+
+.section h3 {
+    margin-top: 0;
+}
+
+.legend {
+    margin: 15px 0;
+    font-size: 14px;
+}
+
+.dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin: 0 5px;
+}
+
+.green {
+    background: #00b76a;
+}
+
+.red {
+    background: #ed2445;
+}
+
+.blue {
+    background: #0875d1;
+}
+
+.slots {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.slot {
+    padding: 25px 10px;
+    text-align: center;
+    border: 2px solid;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.slot.available {
+    background: #e1f7ee;
+    border-color: #20b77a;
+}
+
+.slot.occupied {
+    background: #ffe6e6;
+    border-color: #e66b6b;
+    cursor: not-allowed;
+}
+
+.slot.selected {
+    background: #dcecff;
+    border: 3px solid #0875d1;
+}
+
+.slot:hover:not(.occupied) {
+    transform: scale(1.03);
+}
+
+.slot h4 {
+    margin: 5px;
+}
+
+.slot p {
+    margin: 5px;
+    font-size: 14px;
+}
+
+input, select {
+    display: block;
+    width: 340px;
+    max-width: 100%;
+    padding: 10px;
+    margin: 8px 0 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+label {
+    display: block;
+    margin-top: 12px;
+}
+
+.selected-info {
+    background: #eee;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+}
+
+button {
+    background: #0758d5;
+    color: white;
+    border: none;
+    padding: 11px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+button:hover {
+    background: #003e9e;
+}
+
+button:disabled {
+    background: #999;
+    cursor: not-allowed;
+}
+
+.release {
+    background: red;
+}
+
+.reset {
+    background: #dc143c;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+    margin-top: 15px;
+}
+
+th {
+    background: #172b4d;
+    color: white;
+    padding: 13px;
+}
+
+td {
+    padding: 13px;
+    border-bottom: 1px solid #ddd;
+}
+
+.paid {
+    color: green;
+    font-weight: bold;
+}
+
+.pending {
+    color: #d68a00;
+    font-weight: bold;
+}
+
+.system-control {
+    text-align: center;
+    background: #f5f7fa;
+}
+
+#message {
+    font-weight: bold;
+    margin-top: 12px;
+}
+
+@media(max-width: 700px) {
+    .container {
+        width: 95%;
+    }
+
+    .dashboard {
+        flex-direction: column;
+    }
+
+    .slots {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    table {
+        font-size: 12px;
+    }
+
+    th, td {
+        padding: 7px 3px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>🚘 Smart Parking Management System</h1>
+    <p>Find • Reserve • Pay • Manage Parking</p>
+</header>
+
+<div class="container">
+
+    <!-- DASHBOARD -->
+
+    <div class="dashboard">
+
+        <div class="card">
+            <h3>Total Slots</h3>
+            <h2 id="total">8</h2>
+        </div>
+
+        <div class="card">
+            <h3>Available</h3>
+            <h2 id="available">5</h2>
+        </div>
+
+        <div class="card">
+            <h3>Occupied</h3>
+            <h2 id="occupied">3</h2>
+        </div>
+
+    </div>
+
+
+    <!-- PARKING AREA -->
+
+    <div class="section">
+
+        <h3>🅿 Parking Area</h3>
+
+        <div class="legend">
+            <span class="dot green"></span> Available
+
+            <span class="dot red"></span> Occupied
+
+            <span class="dot blue"></span> Selected
+        </div>
+
+        <div class="slots" id="parkingSlots">
+
+            <div class="slot occupied" data-id="A1">
+                🚘
+                <h4>A1</h4>
+                <p>🔴 Occupied</p>
+            </div>
+
+            <div class="slot occupied" data-id="A2">
+                🚘
+                <h4>A2</h4>
+                <p>🔴 Occupied</p>
+            </div>
+
+            <div class="slot available" data-id="A3">
+                🅿
+                <h4>A3</h4>
+                <p>🟢 Available</p>
+            </div>
+
+            <div class="slot available" data-id="A4">
+                🅿
+                <h4>A4</h4>
+                <p>🟢 Available</p>
+            </div>
+
+            <div class="slot available" data-id="B1">
+                🅿
+                <h4>B1</h4>
+                <p>🟢 Available</p>
+            </div>
+
+            <div class="slot available" data-id="B2">
+                🅿
+                <h4>B2</h4>
+                <p>🟢 Available</p>
+            </div>
+
+            <div class="slot occupied" data-id="B3">
+                🚘
+                <h4>B3</h4>
+                <p>🔴 Occupied</p>
+            </div>
+
+            <div class="slot available" data-id="B4">
+                🅿
+                <h4>B4</h4>
+                <p>🟢 Available</p>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- BOOK PARKING SLOT -->
+
+    <div class="section">
+
+        <h3>📋 Book Parking Slot</h3>
+
+        <div class="selected-info">
+            Selected Slot: <b id="selectedSlot">None</b>
+        </div>
+
+        <label>Vehicle Number</label>
+
+        <input type="text" id="vehicleNumber"
+        placeholder="Enter vehicle number">
+
+        <label>Vehicle Type</label>
+
+        <select id="vehicleType">
+            <option value="Car">🚘 Car</option>
+            <option value="Bike">🏍 Bike</option>
+            <option value="Truck">🚚 Truck</option>
+        </select>
+
+        <button onclick="bookParking()">
+            Book Parking Slot
+        </button>
+
+        <p id="message"></p>
+
+    </div>
+
+
+    <!-- PAYMENT DETAILS -->
+
+    <div class="section">
+
+        <h3>💳 Payment Details</h3>
+
+        <p>Parking Fee: <b>₹50</b></p>
+
+        <label>Payment Method</label>
+
+        <select id="paymentMethod">
+            <option value="">Select Payment Method</option>
+            <option value="UPI">UPI</option>
+            <option value="Cash">Cash</option>
+            <option value="Debit Card">Debit Card</option>
+            <option value="Credit Card">Credit Card</option>
+        </select>
+
+        <button onclick="makePayment()">
+            Pay ₹50
+        </button>
+
+        <p id="paymentMessage"></p>
+
+    </div>
+
+
+    <!-- BOOKING HISTORY -->
+
+    <div class="section">
+
+        <h3>📜 Booking History</h3>
+
+        <div style="overflow-x:auto;">
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Booking ID</th>
+                    <th>Vehicle</th>
+                    <th>Type</th>
+                    <th>Slot</th>
+                    <th>Payment</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody id="bookingHistory">
+
+            </tbody>
+
+        </table>
+
+        </div>
+
+    </div>
+
+
+    <!-- SYSTEM CONTROL -->
+
+    <div class="section system-control">
+
+        <h3>⚙ System Control</h3>
+
+        <p>Reset the parking system.</p>
+
+        <button class="reset" onclick="resetSystem()">
+            Reset System
+        </button>
+
+    </div>
+
+</div>
+
+
+<script>
+
+// PARKING DATA
+
+const initialSlots = {
+    A1: true,
+    A2: true,
+    A3: false,
+    A4: false,
+    B1: false,
+    B2: false,
+    B3: true,
+    B4: false
+};
+
+let slots = {...initialSlots};
+
+let bookings = [
+    {
+        id: "BK9357",
+        vehicle: "mh1012AB",
+        type: "Bike",
+        slot: "A1",
+        payment: "Paid",
+        status: "Active",
+        method: "Cash"
+    }
+];
+
+let selectedSlot = null;
+let pendingBooking = null;
+
+
+// SAVE DATA
+
+function saveData() {
+    localStorage.setItem("parkingSlots", JSON.stringify(slots));
+    localStorage.setItem("parkingBookings", JSON.stringify(bookings));
+}
+
+
+// LOAD DATA
+
+function loadData() {
+    try {
+        const savedSlots = localStorage.getItem("parkingSlots");
+        const savedBookings = localStorage.getItem("parkingBookings");
+
+        if (savedSlots && savedBookings) {
+            const parsedSlots = JSON.parse(savedSlots);
+            const parsedBookings = JSON.parse(savedBookings);
+
+            if (
+                parsedSlots &&
+                Object.keys(initialSlots).every(
+                    key => typeof parsedSlots[key] === "boolean"
+                ) &&
+                Array.isArray(parsedBookings)
+            ) {
+                slots = parsedSlots;
+                bookings = parsedBookings;
+            }
+        }
+    } catch (error) {
+        slots = {...initialSlots};
+        bookings = [{
+            id: "BK9357",
+            vehicle: "mh1012AB",
+            type: "Bike",
+            slot: "A1",
+            payment: "Paid",
+            status: "Active",
+            method: "Cash"
+        }];
+    }
+}
+
+
+// DISPLAY PARKING SLOTS
+
+function displaySlots() {
+
+    const parking = document.getElementById("parkingSlots");
+
+    parking.innerHTML = "";
+
+    for (let id in slots) {
+
+        let div = document.createElement("div");
+
+        div.className = slots[id] ? "slot occupied" : "slot available";
+
+        if (selectedSlot === id) {
+            div.classList.add("selected");
+        }
+
+        div.innerHTML = `
+            ${slots[id] ? "🚘" : "🅿"}
+            <h4>${id}</h4>
+            <p>${slots[id] ? "🔴 Occupied" : "🟢 Available"}</p>
+        `;
+
+        div.addEventListener("click", function() {
+            selectSlot(id);
+        });
+
+        parking.appendChild(div);
+    }
+
+    updateDashboard();
+}
+
+
+// SELECT SLOT
+
+function selectSlot(id) {
+
+    if (slots[id]) {
+        alert("This slot is already occupied!");
+        return;
+    }
+
+    selectedSlot = id;
+
+    document.getElementById("selectedSlot").innerText = id;
+
+    displaySlots();
+
+    document.getElementById("message").innerText = "";
+}
+
+
+// UPDATE DASHBOARD
+
+function updateDashboard() {
+
+    let total = Object.keys(slots).length;
+
+    let occupied = Object.values(slots).filter(Boolean).length;
+
+    let available = total - occupied;
+
+    document.getElementById("total").innerText = total;
+
+    document.getElementById("available").innerText = available;
+
+    document.getElementById("occupied").innerText = occupied;
+}
+
+
+// BOOK PARKING
+
+function bookParking() {
+
+    let vehicle = document.getElementById("vehicleNumber").value.trim();
+
+    let type = document.getElementById("vehicleType").value;
+
+    if (!selectedSlot) {
+        alert("Please select a parking slot!");
+        return;
+    }
+
+    if (!vehicle) {
+        alert("Please enter vehicle number!");
+        return;
+    }
+
+    if (pendingBooking) {
+        alert("Please complete the previous booking payment first.");
+        return;
+    }
+
+    if (slots[selectedSlot]) {
+        alert("This slot is already occupied!");
+        selectedSlot = null;
+        displaySlots();
+        return;
+    }
+
+    let booking = {
+        id: "BK" + Math.floor(1000 + Math.random() * 9000),
+        vehicle: vehicle.toUpperCase(),
+        type: type,
+        slot: selectedSlot,
+        payment: "Pending",
+        status: "Active",
+        method: ""
+    };
+
+    bookings.push(booking);
+
+    slots[selectedSlot] = true;
+
+    pendingBooking = booking;
+
+    document.getElementById("message").style.color = "green";
+
+    document.getElementById("message").innerText =
+        "Slot booked! Please complete payment of ₹50.";
+
+    document.getElementById("paymentMessage").innerText =
+        "Complete payment for Booking ID: " + booking.id;
+
+    selectedSlot = null;
+
+    document.getElementById("selectedSlot").innerText = "None";
+
+    document.getElementById("vehicleNumber").value = "";
+
+    displaySlots();
+
+    displayHistory();
+
+    saveData();
+}
+
+
+// PAYMENT
+
+function makePayment() {
+
+    if (!pendingBooking) {
+        alert("Please book a parking slot first!");
+        return;
+    }
+
+    let method = document.getElementById("paymentMethod").value;
+
+    if (!method) {
+        alert("Please select a payment method!");
+        return;
+    }
+
+    pendingBooking.payment = "Paid";
+
+    pendingBooking.method = method;
+
+    document.getElementById("paymentMessage").style.color = "green";
+
+    document.getElementById("paymentMessage").innerText =
+        "Payment of ₹50 successful!";
+
+    pendingBooking = null;
+
+    document.getElementById("paymentMethod").value = "";
+
+    displayHistory();
+
+    saveData();
+}
+
+
+// DISPLAY BOOKING HISTORY
+
+function displayHistory() {
+
+    let tbody = document.getElementById("bookingHistory");
+
+    tbody.innerHTML = "";
+
+    bookings.forEach((booking, index) => {
+
+        let row = document.createElement("tr");
+
+        let paymentClass =
+            booking.payment === "Paid" ? "paid" : "pending";
+
+        row.innerHTML = `
+            <td>${booking.id}</td>
+            <td>${booking.vehicle}</td>
+            <td>${booking.type}</td>
+            <td>${booking.slot}</td>
+            <td class="${paymentClass}">${booking.payment}</td>
+            <td>${booking.status}</td>
+            <td>
+                ${booking.status === "Active" ?
+                `<button class="release"
+                onclick="releaseSlot(${index})">Release</button>`
+                : "Released"}
+            </td>
+        `;
+
+        tbody.appendChild(row);
+
+    });
+
+}
+
+
+// RELEASE PARKING SLOT
+
+function releaseSlot(index) {
+
+    let booking = bookings[index];
+
+    if (booking.payment !== "Paid") {
+        alert("Complete payment before releasing this booking.");
+        return;
+    }
+
+    if (!confirm("Are you sure you want to release this slot?")) {
+        return;
+    }
+
+    slots[booking.slot] = false;
+
+    booking.status = "Released";
+
+    if (pendingBooking === booking) {
+        pendingBooking = null;
+    }
+
+    displaySlots();
+
+    displayHistory();
+
+    saveData();
+
+    alert("Parking slot released successfully!");
+}
+
+
+// RESET SYSTEM
+
+function resetSystem() {
+
+    if (!confirm("Are you sure you want to reset the parking system?")) {
+        return;
+    }
+
+    slots = {...initialSlots};
+
+    bookings = [
+        {
+            id: "BK9357",
+            vehicle: "mh1012AB",
+            type: "Bike",
+            slot: "A1",
+            payment: "Paid",
+            status: "Active",
+            method: "Cash"
+        }
+    ];
+
+    selectedSlot = null;
+
+    pendingBooking = null;
+
+    document.getElementById("selectedSlot").innerText = "None";
+
+    document.getElementById("vehicleNumber").value = "";
+
+    document.getElementById("paymentMethod").value = "";
+
+    document.getElementById("message").innerText = "";
+
+    document.getElementById("paymentMessage").innerText = "";
+
+    displaySlots();
+
+    displayHistory();
+
+    saveData();
+
+    alert("Parking system reset successfully!");
+}
+
+
+// START SYSTEM
+
+loadData();
+
+displaySlots();
+
+displayHistory();
+
+</script>
+
+</body>
+</html>
